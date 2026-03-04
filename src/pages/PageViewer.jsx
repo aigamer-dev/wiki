@@ -28,6 +28,7 @@ export default function PageViewer() {
 
     useEffect(() => {
         if (!title) return;
+        sessionStorage.setItem('latest_page_viewed', title);
 
         let initialLoadDone = false;
         let initialUpdatedAt = null;

@@ -17,8 +17,14 @@ export default function RandomRedirect() {
                     navigate('/');
                     return;
                 }
-                const allPages = [];
+                let allPages = [];
                 snapshot.forEach((d) => allPages.push(d.id));
+
+                // Exclude the very last page the user was looking at to prevent immediate looping
+                const latestViewed = sessionStorage.getItem('latest_page_viewed');
+                if (latestViewed && allPages.length > 1) {
+                    allPages = allPages.filter(p => p !== latestViewed);
+                }
 
                 let chosenPage = null;
 
@@ -48,38 +54,22 @@ export default function RandomRedirect() {
                     // Anonymous user: generic session storage rotation
                     let seen = [];
                     try {
-                        seen = JSON.parse(sessionStorage.getItem('random_seen') || '[]');
+                        seen = JSON.parse(sessionStorage.getItem('random_seen_history') || '[]');
                     } catch (e) {
                         seen = [];
                     }
 
                     let unseenPages = allPages.filter(p => !seen.includes(p));
                     if (unseenPages.length === 0) {
-                        // Exhausted the pool, reset
                         seen = [];
                         unseenPages = allPages;
                     }
 
                     chosenPage = unseenPages[Math.floor(Math.random() * unseenPages.length)];
-                }
 
-                // Global session history check to strictly prevent back-to-back repeats if possible
-                if (chosenPage && allPages.length > 1) {
-                    let seen = [];
-                    try { seen = JSON.parse(sessionStorage.getItem('random_seen') || '[]'); } catch (e) { seen = []; }
-
-                    // If the algorithm mathematically picked the exact same page we just arrived from, force a re-roll
-                    // using the remaining valid pool (either unread, or other least-read, or just any other page)
-                    if (seen.length > 0 && seen[seen.length - 1] === chosenPage) {
-                        const fallbacks = allPages.filter(p => p !== chosenPage);
-                        chosenPage = fallbacks[Math.floor(Math.random() * fallbacks.length)];
-                    }
-
-                    // For anonymous users we track the full sequence, for logged-in we really only need the last one
-                    // to prevent immediate bounces, but tracking the limit helps. Let's cap history at 50 so it doesn't leak.
                     seen.push(chosenPage);
                     if (seen.length > 50) seen.shift();
-                    sessionStorage.setItem('random_seen', JSON.stringify(seen));
+                    sessionStorage.setItem('random_seen_history', JSON.stringify(seen));
                 }
 
                 // Navigate

@@ -30,6 +30,7 @@ export default function Home() {
         const fetchEntries = async () => {
             try {
                 const q = query(collection(db, 'entries'));
+                const snapshot = await getDocs(q);
                 const fetched = [];
                 const tagsSet = new Set();
                 snapshot.forEach((d) => {
