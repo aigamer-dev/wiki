@@ -10,10 +10,7 @@ import { useReadTracker } from '../hooks/useReadTracker';
 import { calculateReadTime } from '../utils/pointsEngine';
 
 // Lazy load heavy components
-const ReactMarkdown = lazy(() => import('react-markdown'));
-const remarkGfm = lazy(() => import('remark-gfm'));
-const SyntaxHighlighter = lazy(() => import('react-syntax-highlighter').then(m => ({ default: m.Prism })));
-const vscDarkPlus = lazy(() => import('react-syntax-highlighter/dist/esm/styles/prism').then(m => ({ default: m.vscDarkPlus })));
+const MarkdownRenderer = lazy(() => import('../components/MarkdownRenderer'));
 export default function PageViewer() {
     const { title } = useParams();
     const [content, setContent] = useState('');
@@ -196,35 +193,7 @@ export default function PageViewer() {
                         <p className="text-sm text-gray-500 font-medium">Parsing and rendering content...</p>
                     </div>
                 }>
-                    <article className="prose prose-slate lg:prose-lg max-w-none prose-headings:font-bold prose-a:text-blue-600 hover:prose-a:text-blue-800 prose-img:rounded-xl">
-                        <ReactMarkdown
-                            remarkPlugins={[remarkGfm]}
-                            components={{
-                                code({ node, inline, className, children, ...props }) {
-                                    const match = /language-(\w+)/.exec(className || '');
-                                    return !inline && match ? (
-                                        <Suspense fallback={<pre className="bg-gray-900 rounded-md p-4 animate-pulse h-24" />}>
-                                            <SyntaxHighlighter
-                                                style={vscDarkPlus}
-                                                language={match[1]}
-                                                PreTag="div"
-                                                className="rounded-md shadow-sm border border-gray-700"
-                                                {...props}
-                                            >
-                                                {String(children).replace(/\n$/, '')}
-                                            </SyntaxHighlighter>
-                                        </Suspense>
-                                    ) : (
-                                        <code className="bg-gray-100 text-pink-600 px-1.5 py-0.5 rounded-md text-sm font-mono" {...props}>
-                                            {children}
-                                        </code>
-                                    );
-                                },
-                            }}
-                        >
-                            {content}
-                        </ReactMarkdown>
-                    </article>
+                    <MarkdownRenderer content={content} />
                 </Suspense>
             </div>
 
